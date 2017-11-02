@@ -1,8 +1,8 @@
-package sk.stuba.fiit.officefinder
+package sk.stuba.fiit.officefinder.activities
 
 import android.os.Bundle
+import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.FragmentActivity
-import android.util.Log
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -10,6 +10,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.data.geojson.GeoJsonLayer
+import org.json.JSONObject
+import sk.stuba.fiit.officefinder.R
+import sk.stuba.fiit.officefinder.models.GetGeoJSONTask
 
 class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
@@ -24,6 +27,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
+    public fun updateJSON(geoJson: JSONObject) {
+        runOnUiThread {
+            val test = GeoJsonLayer(map, geoJson)
+            test.addLayerToMap()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val button = findViewById<FloatingActionButton>(R.id.floatingActionButton)
+        button.setOnClickListener {
+            val x = GetGeoJSONTask(this)
+            x.execute()
+        }
+    }
 
     /**
      * Manipulates the map once available.
@@ -39,11 +57,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
         // Add a marker in Sydney and move the
 
-        val test = GeoJsonLayer(map, R.raw.geo, applicationContext)
-
-        test.setOnFeatureClickListener { feature -> Log.d("asd", feature.getProperty("name")) }
-        test.addLayerToMap()
-        val bratislava = LatLng(10.0, 125.6)
+        val bratislava = LatLng(48.1010091, 17.099517)
         map!!.addMarker(MarkerOptions().position(bratislava).title("Marker in Bratislava"))
         map!!.moveCamera(CameraUpdateFactory.newLatLng(bratislava))
         map!!.moveCamera(CameraUpdateFactory.zoomTo(15F))
