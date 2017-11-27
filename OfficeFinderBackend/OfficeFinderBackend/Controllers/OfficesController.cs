@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using GeoJSON.Net.Geometry;
 using Microsoft.AspNetCore.Mvc;
 using OfficeFinderBackend.Models;
 using OfficeFinderBackend.Repositories;
@@ -19,22 +18,23 @@ namespace OfficeFinderBackend.Controllers
 
       // GET: api/Offices
       [HttpGet]
-      public Office Get()
+      public IEnumerable<string> Get()
       {
          return _repository.GetOffice();
       }
 
       // GET: api/Offices/5
-      [HttpGet("{id}", Name = "Get")]
-      public string Get(int id)
+      [HttpGet]
+      public IEnumerable<string> Get(GeoPoint point)
       {
-         return "value";
+         return _repository.GetOfficesFiltered(point.Latitude, point.Longitude);
       }
 
       // POST: api/Offices
       [HttpPost]
-      public void Post([FromBody]string value)
+      public IEnumerable<string> Post([FromBody]GeoPoint point)
       {
+         return _repository.GetOfficesFiltered(point.Latitude, point.Longitude);
       }
 
       // PUT: api/Offices/5

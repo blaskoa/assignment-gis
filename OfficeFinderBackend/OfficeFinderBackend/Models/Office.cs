@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using GeoJSON.Net.Geometry;
-
-namespace OfficeFinderBackend.Models
+﻿namespace OfficeFinderBackend.Models
 {
    public class Office
    {
-      public List<Polygon> Polygons { get; set; }
+      public string GeoJson { get; set; }
+      public string Name { get; set; }
    }
 }

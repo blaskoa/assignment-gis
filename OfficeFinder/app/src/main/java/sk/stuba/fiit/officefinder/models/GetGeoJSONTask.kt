@@ -1,19 +1,23 @@
 package sk.stuba.fiit.officefinder.models
 
+import android.location.Location
 import android.os.AsyncTask
-import org.json.JSONObject
 import sk.stuba.fiit.officefinder.activities.MapsActivity
 import sk.stuba.fiit.officefinder.services.OfficeService
 
-class GetGeoJSONTask(private var activity: MapsActivity) : AsyncTask<Unit, Unit, List<JSONObject>>() {
-    override fun doInBackground(vararg params: Unit?): List<JSONObject> {
+class GetGeoJSONTask(private var activity: MapsActivity) : AsyncTask<Location?, Unit, List<String>>() {
+    override fun doInBackground(vararg params: Location?): List<String> {
         val service = OfficeService()
-        return service.get()
+        val location = params[0]
+
+        var point = GeoPoint(49.0, 19.0)
+        if (location != null) {
+            point = GeoPoint(location.latitude, location.longitude)
+        }
+        return service.get(point)
     }
 
-    override fun onPostExecute(result: List<JSONObject>?) {
-        result!!.forEach {
-            activity.updateJSON(it)
-        }
+    override fun onPostExecute(result: List<String>?) {
+        activity.createOfficeLayers(result)
     }
 }
