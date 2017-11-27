@@ -1,5 +1,7 @@
 package sk.stuba.fiit.officefinder.activities
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
@@ -9,29 +11,71 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentActivity
 import android.support.v4.content.ContextCompat
 import android.util.Log
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.Polygon
-import com.google.maps.android.data.geojson.GeoJsonLayer
-import com.google.maps.android.data.geojson.GeoJsonPolygonStyle
-import org.json.JSONObject
+import com.google.android.gms.maps.model.*
 import sk.stuba.fiit.officefinder.R
 import sk.stuba.fiit.officefinder.models.GetGeoJSONTask
+import sk.stuba.fiit.officefinder.models.Office
 
 
 class MapsActivity :
         FragmentActivity(),
         OnMapReadyCallback,
-        GoogleMap.OnPolygonClickListener
-{
-    override fun onPolygonClick(p0: Polygon?) {
-        p0!!.id
+        GoogleMap.OnPolygonClickListener,
+        GoogleMap.OnMapClickListener {
+
+    override fun onMapClick(p0: LatLng?) {
+        hideSelection()
+    }
+
+    override fun onPolygonClick(polygon: Polygon?) {
+        moveCameraToPolygon(polygon)
+        val tag = polygon!!.tag
+
+        if (tag is PolygonTypes) {
+            when(tag) {
+                PolygonTypes.OFFICE -> handleOnOfficeClick(officeMap[polygon.id])
+                PolygonTypes.PARKING -> TODO()
+            }
+        }
+    }
+
+    private fun handleOnOfficeClick(office: Office?) {
+        showSelection(office!!)
+    }
+
+    private fun hideSelection() {
+        drawer.animate()
+                .alpha(0.0f)
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        super.onAnimationEnd(animation)
+                        drawer.visibility = View.GONE
+                    }
+                })
+    }
+
+    private fun showSelection(office: Office) {
+        officeLabel.text = office.name
+        drawer.visibility = View.VISIBLE
+        drawer.alpha = 0.0f
+        // Start the animation
+        drawer.animate()
+                .alpha(1.0f)
+                .setListener(null)
+    }
+
+    private fun moveCameraToPolygon(polygon: Polygon?) {
+        val bounds = getPolygonBounds(polygon!!.points)
+        map!!.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 200))
     }
 
     private var map: GoogleMap? = null
@@ -39,7 +83,11 @@ class MapsActivity :
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private var mLastKnownLocation: Location? = null
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
-    private var officeLayers: MutableList<GeoJsonLayer> = ArrayList()
+    private var officePolygons: MutableList<Polygon> = ArrayList()
+    private var officeMap: MutableMap<String, Office> = HashMap()
+
+    private lateinit var drawer: LinearLayout
+    private lateinit var officeLabel: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,34 +95,40 @@ class MapsActivity :
         // Obtain the SupportMapFragment and getFiltered notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
+
+        drawer = findViewById(R.id.drawerLayout)
+        officeLabel = findViewById(R.id.officeNameTextView)
         mapFragment.getMapAsync(this)
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
-    fun createOfficeLayers(offices: List<String>?) {
+    fun createOfficePolygons(offices: List<Office>) {
         runOnUiThread {
-            if (officeLayers.isNotEmpty()) {
-                officeLayers.forEach({it.removeLayerFromMap()})
-                officeLayers.clear()
+            var color = Color.BLUE
+            if (officePolygons.isNotEmpty()) {
+                officePolygons.forEach { it.remove() }
+                officePolygons.clear()
+                color = Color.RED
             }
-            offices!!.forEach {
-                val officeLayer = GeoJsonLayer(map, JSONObject(it))
-                officeLayer.features.forEach({ feature ->
-                    val style = GeoJsonPolygonStyle()
-                    style.fillColor = Color.RED
-                    feature.polygonStyle = style
-                })
-                officeLayer.setOnFeatureClickListener({ feature ->
-                    val bundle = Bundle()
-                    bundle.putString(Constants.NAME_BUNDLE_KEY, feature.getProperty("name"))
-                    bundle.putString(Constants.ID_BUNDLE_KEY, feature.id)
+            if (officeMap.isNotEmpty()) {
+                officeMap.clear()
+            }
 
-                    val dialog = OfficeDialogFragment()
-                    dialog.arguments = bundle
-                    dialog.show(supportFragmentManager, "tag2")
+            offices.forEach {
+                val pointCollection = it.geoPointStrings.map { it.toLatLngList() }
+                val polygonOptions =
+                        PolygonOptions()
+                                .fillColor(color)
+                                .strokeWidth(5.0F)
+                                .clickable(true)
+
+                pointCollection.forEach({
+                    polygonOptions.addAll(it)
                 })
-                officeLayer.addLayerToMap()
-                officeLayers.add(officeLayer)
+                val polygon = map!!.addPolygon(polygonOptions)
+                polygon.tag = PolygonTypes.OFFICE
+                officePolygons.add(polygon)
+                officeMap.put(polygon.id, it)
             }
         }
     }
@@ -83,44 +137,26 @@ class MapsActivity :
         super.onResume()
         val button = findViewById<FloatingActionButton>(R.id.floatingActionButton)
         button.setOnClickListener {
+            hideSelection()
             val x = GetGeoJSONTask(this)
             x.execute(mLastKnownLocation)
         }
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-        // Add a marker in Sydney and move the
-
         val bratislava = LatLng(48.1010091, 17.099517)
-        map!!.addMarker(MarkerOptions().position(bratislava).title("Marker in Bratislava"))
         map!!.moveCamera(CameraUpdateFactory.newLatLng(bratislava))
         map!!.moveCamera(CameraUpdateFactory.zoomTo(15F))
+
         map!!.setOnPolygonClickListener(this)
+        map!!.setOnMapClickListener(this)
 
-        // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
-
-        // Get the current location of the device and set the position of the map.
         getDeviceLocation()
     }
 
     private fun getLocationPermission() {
-        /*
-     * Request location permission, so that we can get the location of the
-     * device. The result of the permission request is handled by a callback,
-     * onRequestPermissionsResult.
-     */
         if (ContextCompat.checkSelfPermission(this.applicationContext,
                 android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mLocationPermissionGranted = true
@@ -167,10 +203,6 @@ class MapsActivity :
     }
 
     private fun getDeviceLocation() {
-        /*
-     * Get the best and most recent location of the device, which may be null in rare
-     * cases when a location is not available.
-     */
         try {
             if (mLocationPermissionGranted) {
                 val locationResult = mFusedLocationProviderClient.lastLocation
@@ -181,8 +213,7 @@ class MapsActivity :
                             val latLng = LatLng(mLastKnownLocation!!.latitude, mLastKnownLocation!!.longitude)
                             map!!.moveCamera(CameraUpdateFactory.newLatLng(latLng))
                         }
-                    }
-                    else {
+                    } else {
                         Log.d("tag", "Current location is null. Using defaults.")
                         Log.e("tag", "Exception: %s", task.getException())
                     }
@@ -193,6 +224,15 @@ class MapsActivity :
         }
 
     }
+
+    private fun getPolygonBounds(polygonPointsList: List<LatLng>): LatLngBounds {
+        val builder = LatLngBounds.Builder()
+        for (i in 0 until polygonPointsList.size) {
+            builder.include(polygonPointsList[i])
+        }
+
+        return builder.build()
+    }
 }
 
 class Constants {
@@ -200,4 +240,8 @@ class Constants {
         const val NAME_BUNDLE_KEY = "NAME_BUNDLE_KEY"
         const val ID_BUNDLE_KEY = "ID_BUNDLE_KEY"
     }
+}
+
+enum class PolygonTypes {
+    OFFICE, PARKING
 }

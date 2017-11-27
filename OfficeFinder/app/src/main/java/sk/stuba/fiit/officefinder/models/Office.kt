@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 class Office(
         @SerializedName("name")
-        val Name: String,
-        val id: Int
+        val name: String,
+        @SerializedName("id")
+        val id: Int,
+        @SerializedName("geoPointStrings")
+        val geoPointStrings: List<GeoPointString>
 )

@@ -18,21 +18,14 @@ namespace OfficeFinderBackend.Controllers
 
       // GET: api/Offices
       [HttpGet]
-      public IEnumerable<string> Get()
+      public IEnumerable<Office> Get()
       {
          return _repository.GetOffice();
       }
 
-      // GET: api/Offices/5
-      [HttpGet]
-      public IEnumerable<string> Get(GeoPoint point)
-      {
-         return _repository.GetOfficesFiltered(point.Latitude, point.Longitude);
-      }
-
       // POST: api/Offices
       [HttpPost]
-      public IEnumerable<string> Post([FromBody]GeoPoint point)
+      public IEnumerable<Office> Post([FromBody]GeoPoint point)
       {
          return _repository.GetOfficesFiltered(point.Latitude, point.Longitude);
       }
