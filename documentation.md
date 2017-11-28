@@ -7,7 +7,7 @@ OfficeFinder is an application that helps the user to find parking spots nearby 
 
 This is the frontend in action:
 
-![Screenshot in action](screenshots/in_action.png)
+<img src="screenshots/in_action.png" width="512">
 
 The application is divided into 2 parts:
 - [Android mobile frontend](#frontend)
@@ -31,16 +31,16 @@ From the android perspective, the frontend consist of a single activity. Communi
 **Loading the offices**: When the user taps on the ping floating button on the screen, his location is sent to the backend and all offices within 5km of his location are rendered on the map. This button also removes all previous polygons from the map
 
 **Displaying office details**: When the user taps on an office, all other offices fade and the map pans and zooms to the selected office. The name of the office is displayed and the user is able to select a rang for parking.
-![Screenshot office details](screenshots/office_details.png)
+<img src="screenshots/office_details.png" width="512">
 
 **Selection of parking range**: The user is able to change the parking range with the slider. A circle is rendered, approximating the selected range.
-![Screenshot parking range](screenshots/range_selection.png)
+<img src="screenshots/range_selection.png" width="512">
 
 **Displaying parking spots**: When the user specifies the range, the circle fades and stays on the map until the user selects a different range. Any parking spots within the range are rendered on the map and color-coded from green to red representing the distance of the parking spot to the office. All previous parking spots are removed from the map, so they do not clutter the UI.
-![Screenshot parking spots](screenshots/parking_spots.png)
+<img src="parking_spots.png" width="512">
 
 **Displaying parking spot details**: When the user taps on a parking spot, the map again and zooms on the parking spot. Name and Access are displayed if available. Also the distance to the office from the parking spot is displayed.
-![Screenshot parking spot details](screenshots/parking_spot_detail.png)
+<img src="screenshots/parking_spot_detail.png" width="512">
 
 # Backend
 
@@ -66,28 +66,61 @@ Even tough the data queried from the database are in geoJson format, the data th
 
 ```
 {
-  "name": "Modra hviezda",
-  "style": "modern", # cuisine style
-  "stars": 3,
-  "address": "Panska 31"
-  "image_url": "/assets/hotels/652.png"
+  "latitude": 17.68421,
+  "longitude": 47.9781
 }
 ```
 
-**Find hotels by name, sorted by proximity and quality**
-
-`GET /search?name=hviezda&lat=25346&long=46346123`
-
-### Response
-
-API calls return json responses with 2 top-level keys, `hotels` and `geojson`. `hotels` contains an array of hotel data for the sidebar, one entry per matched hotel. Hotel attributes are (mostly self-evident):
+*Response*
 ```
 {
-  "name": "Modra hviezda",
-  "style": "modern", # cuisine style
-  "stars": 3,
-  "address": "Panska 31"
-  "image_url": "/assets/hotels/652.png"
+  "id": 687945,
+  "name": "Digital park 2",
+  "geoPointStrings": [
+    "geoPoints" : [
+      {
+      "latitude": 17.68421,
+      "longitude": 47.9781
+      },
+      ...
+    ],
+    ...
+  ]
 }
 ```
-`geojson` contains a geojson with locations of all matched hotels and style definitions.
+
+**Finds the parking places within selected proximity of a selected office building**
+
+*Header*
+
+`POST /api/Parking`
+
+*Body*
+
+```
+{
+  "OfficeId": 871354,
+  "Distance": 220
+}
+```
+
+*Response*
+```
+{
+  "id": 687944,
+  "name": "Digital park parking",
+  "score": 0.167,
+  "distance": 134.8743,
+  "access": "private"
+  "geoPointStrings": [
+    "geoPoints" : [
+      {
+      "latitude": 17.68421,
+      "longitude": 47.9781
+      },
+      ...
+    ],
+    ...
+  ]
+}
+```
