@@ -175,7 +175,7 @@ class MapsActivity :
                 val pointCollection = it.geoPointStrings.map { it.toLatLngList() }
                 val polygonOptions =
                         PolygonOptions()
-                                .fillColor(Color.GREEN)
+                                .fillColor(calculateColor(it.score))
                                 .strokeWidth(5.0F)
                                 .clickable(true)
 
@@ -332,6 +332,12 @@ class MapsActivity :
         }
 
         return builder.build()
+    }
+
+    private fun calculateColor(scale: Double) : Int {
+        val hue = (((1-scale)*100) * 1.2).toFloat()
+        val hsv = floatArrayOf(hue, 1F, 1F)
+        return Color.HSVToColor(200, hsv)
     }
 }
 
