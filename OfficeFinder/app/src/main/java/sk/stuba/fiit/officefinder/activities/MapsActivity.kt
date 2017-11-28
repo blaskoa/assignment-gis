@@ -38,7 +38,11 @@ class MapsActivity :
         GoogleMap.OnMapClickListener {
 
     override fun onMapClick(p0: LatLng?) {
-        unselectOffice()
+        hideLayoutWithAnimation(parkingPanel)
+        hideLayoutWithAnimation(officePanel)
+        if (!isCircleFaded) {
+            parkingSelectionCircle.isVisible = false
+        }
     }
 
     override fun onPolygonClick(polygon: Polygon?) {
@@ -51,7 +55,9 @@ class MapsActivity :
                     selectedOfficePolygon = polygon
                     handleOnOfficeClick(officeMap[polygon.id])
                 }
-                PolygonTypes.PARKING -> TODO()
+                PolygonTypes.PARKING -> {
+
+                }
             }
         }
     }
@@ -65,6 +71,10 @@ class MapsActivity :
         selectedOfficePolygon = null
         hideOfficePanel()
         state = ActivityState.NOTHING
+        officePolygons.forEach {
+            it.strokeColor = getColorCompat(R.color.strokeActive)
+            it.fillColor = getColorCompat(R.color.officeActive)
+        }
     }
 
     private fun hideOfficePanel() {
@@ -84,6 +94,17 @@ class MapsActivity :
 
     private fun selectOffice(office: Office) {
         selectedOffice = office
+        officePolygons.forEach {
+            if (it.id != selectedOfficePolygon!!.id) {
+                it.strokeColor = getColorCompat(R.color.strokeInactive)
+                it.fillColor = getColorCompat(R.color.officeInactive)
+            }
+            else {
+                it.strokeColor = getColorCompat(R.color.strokeActive)
+                it.fillColor = getColorCompat(R.color.officeActive)
+            }
+
+        }
         showOfficePanel(office)
         state = ActivityState.OFFICE
     }
@@ -111,13 +132,14 @@ class MapsActivity :
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private var mLastKnownLocation: Location? = null
     private var officePolygons: MutableList<Polygon> = ArrayList()
+    private var parkingPolygons: MutableList<Polygon> = ArrayList()
     private var officeMap: MutableMap<String, Office> = HashMap()
     private var selectedOffice: Office? = null
     private var selectedOfficePolygon: Polygon? = null
     private var state: ActivityState = ActivityState.NOTHING
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var parkingSelectionCircle: Circle
-
+    private var isCircleFaded: Boolean = false
 
     private lateinit var officePanel: LinearLayout
     private lateinit var officeLabel: TextView
@@ -140,11 +162,9 @@ class MapsActivity :
 
     fun createOfficePolygons(offices: List<Office>) {
         runOnUiThread {
-            var color = Color.BLUE
             if (officePolygons.isNotEmpty()) {
                 officePolygons.forEach { it.remove() }
                 officePolygons.clear()
-                color = Color.RED
             }
             if (officeMap.isNotEmpty()) {
                 officeMap.clear()
@@ -154,7 +174,8 @@ class MapsActivity :
                 val pointCollection = it.geoPointStrings.map { it.toLatLngList() }
                 val polygonOptions =
                         PolygonOptions()
-                                .fillColor(color)
+                                .fillColor(getColorCompat(R.color.officeActive))
+                                .strokeColor(getColorCompat(R.color.strokeActive))
                                 .strokeWidth(5.0F)
                                 .clickable(true)
 
@@ -171,12 +192,14 @@ class MapsActivity :
 
     fun createParkingPolygons(parking: List<Parking>) {
         runOnUiThread {
+            clearParkingPolygonsIfNecessary()
             parking.forEach {
                 val pointCollection = it.geoPointStrings.map { it.toLatLngList() }
                 val polygonOptions =
                         PolygonOptions()
                                 .fillColor(calculateColor(it.score))
                                 .strokeWidth(5.0F)
+                                .strokeColor(getColorCompat(R.color.strokeActive))
                                 .clickable(true)
 
                 pointCollection.forEach({
@@ -184,9 +207,16 @@ class MapsActivity :
                 })
                 val polygon = map!!.addPolygon(polygonOptions)
                 polygon.tag = PolygonTypes.PARKING
-//                officePolygons.add(polygon)
+                parkingPolygons.add(polygon)
 //                officeMap.put(polygon.id, it)
             }
+        }
+    }
+
+    private fun clearParkingPolygonsIfNecessary() {
+        if (parkingPolygons.isNotEmpty()) {
+            parkingPolygons.forEach { it.remove() }
+            parkingPolygons.clear()
         }
     }
 
@@ -196,9 +226,12 @@ class MapsActivity :
         val selectParkingRangeButton = findViewById<Button>(R.id.selectParkingRangeButton)
         val findParkingButton = findViewById<Button>(R.id.findParkingButton)
         val parkingSeekBar = findViewById<SeekBar>(R.id.parkingRangeSeekBar)
-
         refreshButton.setOnClickListener {
             unselectOffice()
+            hideLayoutWithAnimation(parkingPanel)
+            clearParkingPolygonsIfNecessary()
+            isCircleFaded = false
+            parkingSelectionCircle.isVisible = false
             GetOfficesTask(this).execute(mLastKnownLocation)
         }
 
@@ -208,6 +241,7 @@ class MapsActivity :
                     state = ActivityState.PARKING_RANGE
                     parkingSelectionCircle.center = getPolygonBounds(selectedOfficePolygon!!.points).center
                     parkingSelectionCircle.isVisible = true
+                    isCircleFaded = false
                     hideLayoutWithAnimation(officePanel)
                     showLayoutWithAnimation(parkingPanel)
                 }
@@ -230,7 +264,10 @@ class MapsActivity :
         })
 
         findParkingButton.setOnClickListener {
-            parkingSelectionCircle.isVisible = false
+            isCircleFaded = true
+            parkingSelectionCircle.fillColor = getColorCompat(R.color.circleInactive)
+            parkingSelectionCircle.strokeColor = getColorCompat(R.color.strokeInactive)
+            hideLayoutWithAnimation(parkingPanel)
             GetParkingTask(this).execute(ParkingRequest(selectedOffice!!.id, parkingSelectionCircle.radius))
         }
     }
@@ -247,7 +284,8 @@ class MapsActivity :
         val circleOption = CircleOptions()
                 .visible(false)
                 .radius(5.0)
-                .fillColor(Color.GRAY)
+                .fillColor(getColorCompat(R.color.circleActive))
+                .strokeColor(getColorCompat(R.color.strokeActive))
                 .center(bratislava)
                 .zIndex(1F)
                 .strokeWidth(5F)
@@ -337,7 +375,11 @@ class MapsActivity :
     private fun calculateColor(scale: Double) : Int {
         val hue = (((1-scale)*100) * 1.2).toFloat()
         val hsv = floatArrayOf(hue, 1F, 1F)
-        return Color.HSVToColor(200, hsv)
+        return Color.HSVToColor(150, hsv)
+    }
+
+    private fun getColorCompat(id: Int): Int {
+        return ContextCompat.getColor(this, id);
     }
 }
 

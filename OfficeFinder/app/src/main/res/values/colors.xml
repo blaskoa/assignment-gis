@@ -3,4 +3,12 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="circleActive">#a0FF4081</color>
+    <color name="circleInactive">#40FF4081</color>
+    <color name="strokeActive">#96000000</color>
+    <color name="strokeInactive">#40000000</color>
+    <color name="officeActive">#963F51B5</color>
+    <color name="officeInactive">#403F51B5</color>
+
 </resources>
