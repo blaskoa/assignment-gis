@@ -20,9 +20,11 @@ namespace OfficeFinderBackend.Repositories
          @"SELECT ST_AsGeoJSON(way)::jsonb as geojson, name, osm_id as id
               FROM public.planet_osm_polygon
               where (building = 'office' or landuse='commercial')
-              and st_dwithin(way, st_setsrid(st_makepoint(@longitude, @latitude), 4326), 5)
-              order by name asc
+              and st_dwithin(way, st_setsrid(st_makepoint(@longitude, @latitude), 4326), 0.05)
+              and name is not null
+              order by st_distance(way, st_setsrid(st_makepoint(@longitude, @latitude), 4326)) asc
               limit 100";
+
 
       public IEnumerable<Office> GetOffice()
       {

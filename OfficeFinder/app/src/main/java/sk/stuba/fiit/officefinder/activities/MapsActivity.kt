@@ -12,7 +12,9 @@ import android.support.v4.app.FragmentActivity
 import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -22,8 +24,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import sk.stuba.fiit.officefinder.R
-import sk.stuba.fiit.officefinder.models.GetGeoJSONTask
+import sk.stuba.fiit.officefinder.tasks.GetOfficesTask
 import sk.stuba.fiit.officefinder.models.Office
+import sk.stuba.fiit.officefinder.models.Parking
+import sk.stuba.fiit.officefinder.models.ParkingRequest
+import sk.stuba.fiit.officefinder.tasks.GetParkingTask
 
 
 class MapsActivity :
@@ -33,7 +38,7 @@ class MapsActivity :
         GoogleMap.OnMapClickListener {
 
     override fun onMapClick(p0: LatLng?) {
-        hideSelection()
+        unselectOffice()
     }
 
     override fun onPolygonClick(polygon: Polygon?) {
@@ -42,33 +47,56 @@ class MapsActivity :
 
         if (tag is PolygonTypes) {
             when(tag) {
-                PolygonTypes.OFFICE -> handleOnOfficeClick(officeMap[polygon.id])
+                PolygonTypes.OFFICE -> {
+                    selectedOfficePolygon = polygon
+                    handleOnOfficeClick(officeMap[polygon.id])
+                }
                 PolygonTypes.PARKING -> TODO()
             }
         }
     }
 
     private fun handleOnOfficeClick(office: Office?) {
-        showSelection(office!!)
+        selectOffice(office!!)
     }
 
-    private fun hideSelection() {
-        drawer.animate()
+    private fun unselectOffice() {
+        selectedOffice = null
+        selectedOfficePolygon = null
+        hideOfficePanel()
+        state = ActivityState.NOTHING
+    }
+
+    private fun hideOfficePanel() {
+        hideLayoutWithAnimation(officePanel)
+    }
+
+    private fun hideLayoutWithAnimation(linearLayout: LinearLayout) {
+        linearLayout.animate()
                 .alpha(0.0f)
                 .setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         super.onAnimationEnd(animation)
-                        drawer.visibility = View.GONE
+                        linearLayout.visibility = View.GONE
                     }
                 })
     }
 
-    private fun showSelection(office: Office) {
+    private fun selectOffice(office: Office) {
+        selectedOffice = office
+        showOfficePanel(office)
+        state = ActivityState.OFFICE
+    }
+
+    private fun showOfficePanel(office: Office) {
         officeLabel.text = office.name
-        drawer.visibility = View.VISIBLE
-        drawer.alpha = 0.0f
-        // Start the animation
-        drawer.animate()
+        showLayoutWithAnimation(officePanel)
+    }
+
+    private fun showLayoutWithAnimation(linearLayout: LinearLayout) {
+        linearLayout.visibility = View.VISIBLE
+        linearLayout.alpha = 0.0f
+        linearLayout.animate()
                 .alpha(1.0f)
                 .setListener(null)
     }
@@ -82,12 +110,18 @@ class MapsActivity :
     private var mLocationPermissionGranted: Boolean = false
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private var mLastKnownLocation: Location? = null
-    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private var officePolygons: MutableList<Polygon> = ArrayList()
     private var officeMap: MutableMap<String, Office> = HashMap()
+    private var selectedOffice: Office? = null
+    private var selectedOfficePolygon: Polygon? = null
+    private var state: ActivityState = ActivityState.NOTHING
+    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var parkingSelectionCircle: Circle
 
-    private lateinit var drawer: LinearLayout
+
+    private lateinit var officePanel: LinearLayout
     private lateinit var officeLabel: TextView
+    private lateinit var parkingPanel: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,8 +130,10 @@ class MapsActivity :
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
 
-        drawer = findViewById(R.id.drawerLayout)
+        officePanel = findViewById(R.id.officePanelLayout)
         officeLabel = findViewById(R.id.officeNameTextView)
+        parkingPanel = findViewById(R.id.parkingPanelLayout)
+
         mapFragment.getMapAsync(this)
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
     }
@@ -133,13 +169,69 @@ class MapsActivity :
         }
     }
 
+    fun createParkingPolygons(parking: List<Parking>) {
+        runOnUiThread {
+            parking.forEach {
+                val pointCollection = it.geoPointStrings.map { it.toLatLngList() }
+                val polygonOptions =
+                        PolygonOptions()
+                                .fillColor(Color.GREEN)
+                                .strokeWidth(5.0F)
+                                .clickable(true)
+
+                pointCollection.forEach({
+                    polygonOptions.addAll(it)
+                })
+                val polygon = map!!.addPolygon(polygonOptions)
+                polygon.tag = PolygonTypes.PARKING
+//                officePolygons.add(polygon)
+//                officeMap.put(polygon.id, it)
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        val button = findViewById<FloatingActionButton>(R.id.floatingActionButton)
-        button.setOnClickListener {
-            hideSelection()
-            val x = GetGeoJSONTask(this)
-            x.execute(mLastKnownLocation)
+        val refreshButton = findViewById<FloatingActionButton>(R.id.floatingActionButton)
+        val selectParkingRangeButton = findViewById<Button>(R.id.selectParkingRangeButton)
+        val findParkingButton = findViewById<Button>(R.id.findParkingButton)
+        val parkingSeekBar = findViewById<SeekBar>(R.id.parkingRangeSeekBar)
+
+        refreshButton.setOnClickListener {
+            unselectOffice()
+            GetOfficesTask(this).execute(mLastKnownLocation)
+        }
+
+        selectParkingRangeButton.setOnClickListener {
+            if (state == ActivityState.OFFICE) {
+                if (selectedOffice != null && selectedOfficePolygon != null) {
+                    state = ActivityState.PARKING_RANGE
+                    parkingSelectionCircle.center = getPolygonBounds(selectedOfficePolygon!!.points).center
+                    parkingSelectionCircle.isVisible = true
+                    hideLayoutWithAnimation(officePanel)
+                    showLayoutWithAnimation(parkingPanel)
+                }
+            }
+        }
+
+        parkingSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                parkingSelectionCircle.radius = (5*progress).toDouble()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+        })
+
+        findParkingButton.setOnClickListener {
+            parkingSelectionCircle.isVisible = false
+            GetParkingTask(this).execute(ParkingRequest(selectedOffice!!.id, parkingSelectionCircle.radius))
         }
     }
 
@@ -151,6 +243,15 @@ class MapsActivity :
 
         map!!.setOnPolygonClickListener(this)
         map!!.setOnMapClickListener(this)
+
+        val circleOption = CircleOptions()
+                .visible(false)
+                .radius(5.0)
+                .fillColor(Color.GRAY)
+                .center(bratislava)
+                .zIndex(1F)
+                .strokeWidth(5F)
+        parkingSelectionCircle = map!!.addCircle(circleOption)
 
         updateLocationUI()
         getDeviceLocation()
@@ -174,7 +275,6 @@ class MapsActivity :
         mLocationPermissionGranted = false
         when (requestCode) {
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true
                 }
@@ -244,4 +344,8 @@ class Constants {
 
 enum class PolygonTypes {
     OFFICE, PARKING
+}
+
+enum class ActivityState {
+    NOTHING, OFFICE, PARKING_RANGE, PARKING
 }

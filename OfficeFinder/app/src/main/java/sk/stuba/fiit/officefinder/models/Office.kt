@@ -6,7 +6,7 @@ class Office(
         @SerializedName("name")
         val name: String,
         @SerializedName("id")
-        val id: Int,
+        val id: Long,
         @SerializedName("geoPointStrings")
         val geoPointStrings: List<GeoPointString>
 )

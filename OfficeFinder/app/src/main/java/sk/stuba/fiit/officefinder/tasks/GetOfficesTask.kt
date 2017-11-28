@@ -1,11 +1,13 @@
-package sk.stuba.fiit.officefinder.models
+package sk.stuba.fiit.officefinder.tasks
 
 import android.location.Location
 import android.os.AsyncTask
 import sk.stuba.fiit.officefinder.activities.MapsActivity
+import sk.stuba.fiit.officefinder.models.GeoPoint
+import sk.stuba.fiit.officefinder.models.Office
 import sk.stuba.fiit.officefinder.services.OfficeService
 
-class GetGeoJSONTask(private var activity: MapsActivity) : AsyncTask<Location?, Unit, List<Office>>() {
+class GetOfficesTask(private var activity: MapsActivity) : AsyncTask<Location?, Unit, List<Office>>() {
     override fun doInBackground(vararg params: Location?): List<Office> {
         val service = OfficeService()
         val location = params[0]

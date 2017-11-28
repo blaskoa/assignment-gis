@@ -9,7 +9,7 @@ namespace OfficeFinderBackend.Controllers
    [Route("api/Offices")]
    public class OfficesController : Controller
    {
-      private OfficeRepository _repository;
+      private readonly OfficeRepository _repository;
 
       public OfficesController()
       {
@@ -28,18 +28,6 @@ namespace OfficeFinderBackend.Controllers
       public IEnumerable<Office> Post([FromBody]GeoPoint point)
       {
          return _repository.GetOfficesFiltered(point.Latitude, point.Longitude);
-      }
-
-      // PUT: api/Offices/5
-      [HttpPut("{id}")]
-      public void Put(int id, [FromBody]string value)
-      {
-      }
-
-      // DELETE: api/ApiWithActions/5
-      [HttpDelete("{id}")]
-      public void Delete(int id)
-      {
       }
    }
 }

@@ -15,7 +15,7 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/drawerLayout"
+            android:id="@+id/officePanelLayout"
             android:orientation="vertical"
             android:layout_gravity="center_horizontal"
             android:background="@color/colorPrimaryDark"
@@ -28,8 +28,32 @@
                 android:layout_gravity="center_horizontal"
                 android:gravity="center_horizontal"/>
         <Button
+                android:text="@string/select_parking_range"
+                android:id="@+id/selectParkingRangeButton"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center"/>
+    </LinearLayout>
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/parkingPanelLayout"
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/colorPrimaryDark"
+            android:visibility="gone"
+            tools:visibility="visible">
+        <SeekBar
+                tools:text="Office name"
+                android:id="@+id/parkingRangeSeekBar"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_horizontal"
+                android:progress="1"/>
+        <Button
                 android:text="@string/find_parking"
-                android:id="@+id/officeButton"
+                android:id="@+id/findParkingButton"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:layout_gravity="center"/>
