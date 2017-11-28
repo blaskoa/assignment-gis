@@ -1,47 +1,78 @@
-*This is a documentation for a fictional project, just to show you what I expect. Notice a few key properties:*
-- *no cover page, really*
-- *no copy&pasted assignment text*
-- *no code samples*
-- *concise, to the point, gets me a quick overview of what was done and how*
-- *I don't really care about the document length*
-- *I used links where appropriate*
-
 # Overview
 
-This application shows hotels in Bratislava on a map. Most important features are:
-- search by proximity to my current location
-- search by hotel name
-- intelligent ordering - by proximity and by hotel features
-- hotels on the map are color coded by their quality assigned in stars (standard)
+OfficeFinder is an application that helps the user to find parking spots nearby office buildings. Use cases include:
+- Finding office building near Your location
+- Finding parking spots near an office building
+- Calculating the distance from an office to the closest parking spots
 
-This is it in action:
+This is the frontend in action:
 
-![Screenshot](screenshot.png)
+![Screenshot in action](screenshots/in_action.png)
 
-The application has 2 separate parts, the client which is a [frontend web application](#frontend) using mapbox API and mapbox.js and the [backend application](#backend) written in [Rails](http://rubyonrails.org/), backed by PostGIS. The frontend application communicates with backend using a [REST API](#api).
+The application is divided into 2 parts:
+- [Android mobile frontend](#frontend)
+- [.NET Core 2.0 backend](#backend)
+
+These two parts communicate via a [REST API](#api).
 
 # Frontend
 
-The frontend application is a static HTML page (`index.html`), which shows a mapbox.js widget. It is displaying hotels, which are mostly in cities, thus the map style is based on the Emerald style. I modified the style to better highlight main sightseeing points, restaurants and bus stops, since they are all important when selecting a hotel. I also highlighted rails tracks to assist in finding a quiet location.
+The frontend is made of Android application written in [Kotlin](https://kotlinlang.org/). The main responsibilities of the application are:
+- Render a map using Google maps
+- Provide the backend with the location of the user
+- Render offices and parking places on the map
+- Interact with the user to provide specific office building and range
+- Show details of the offices and parking places
 
-All relevant frontend code is in `application.js` which is referenced from `index.html`. The frontend code is very simple, its only responsibilities are:
-- detecting user's location, using the standard [web location API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)
-- displaying the sidebar panel with hotel list and filtering controls, driving the user interaction and calling the appropriate backend APIs
-- displaying geo features by overlaying the map with a geojson layer, the geojson is provided directly by backend APIs
+From the android perspective, the frontend consist of a single activity. Communication with the backend REST API is handled by [Retrofit](http://square.github.io/retrofit/). Everything else is just pure Android.
+
+## In action
+
+**Loading the offices**: When the user taps on the ping floating button on the screen, his location is sent to the backend and all offices within 5km of his location are rendered on the map. This button also removes all previous polygons from the map
+
+**Displaying office details**: When the user taps on an office, all other offices fade and the map pans and zooms to the selected office. The name of the office is displayed and the user is able to select a rang for parking.
+![Screenshot office details](screenshots/office_details.png)
+
+**Selection of parking range**: The user is able to change the parking range with the slider. A circle is rendered, approximating the selected range.
+![Screenshot parking range](screenshots/range_selection.png)
+
+**Displaying parking spots**: When the user specifies the range, the circle fades and stays on the map until the user selects a different range. Any parking spots within the range are rendered on the map and color-coded from green to red representing the distance of the parking spot to the office. All previous parking spots are removed from the map, so they do not clutter the UI.
+![Screenshot parking spots](screenshots/parking_spots.png)
+
+**Displaying parking spot details**: When the user taps on a parking spot, the map again and zooms on the parking spot. Name and Access are displayed if available. Also the distance to the office from the parking spot is displayed.
+![Screenshot parking spot details](screenshots/parking_spot_detail.png)
 
 # Backend
 
-The backend application is written in Ruby on Rails and is responsible for querying geo data, formatting the geojson and data for the sidebar panel.
+The backend application is written in .NET Core 2.0 WebAPI. It uses a PostgreSQL database with PostGIS extension to store all geodata. A microORM [Dapper](https://github.com/StackExchange/Dapper) is used for easier data querying.
 
 ## Data
 
-Hotel data is coming directly from Open Street Maps. I downloaded an extent covering whole Slovakia (around 1.2GB) and imported it using the `osm2pgsql` tool into the standard OSM schema in WGS 84 with hstore enabled. To speedup the queries I created an index on geometry column (`way`) in all tables. The application follows standard Rails conventions and all queries are placed in models inside `app/models`, mostly in `app/models/hotel.rb`. GeoJSON is generated by using a standard `st_asgeojson` function, however some postprocessing is necessary (in `app/controllers/search_controller.rb`) in order to merge all hotels into a single geojson.
+All geographical data are from Open Street Maps. The data I used are only from Bratislava. The queries can be found in the `OfficeRepository.cs` and `ParkingRepository.cs` files.
+
+The query for getting Offices is pretty straightforward, but the Parking query is different. As I decided to score the parking spots based on their proximity to the office on the database.
+
+Even tough the data queried from the database are in geoJson format, the data that flow between Frontend and Backend are not. This is because the Google maps API on the frontend was not able to properly handle geoJson files.
 
 ## Api
 
-**Find hotels in proximity to coordinates**
+**Find offices within 5km of the coordinates**
 
-`GET /search?lat=25346&long=46346123`
+*Header*
+
+`POST /api/Offices`
+
+*Body*
+
+```
+{
+  "name": "Modra hviezda",
+  "style": "modern", # cuisine style
+  "stars": 3,
+  "address": "Panska 31"
+  "image_url": "/assets/hotels/652.png"
+}
+```
 
 **Find hotels by name, sorted by proximity and quality**
 

@@ -18,10 +18,11 @@ Build a map-based application, which lets the user see geo-based data on a map a
 
 ## My project
 
-Fill in (either in English, or in Slovak):
+**Application description**: OfficeFinder is an application that helps the user to find parking spots nearby office buildings. Use cases include:
+- Finding office building near Your location
+- Finding parking spots near an office building
+- Calculating the distance from an office to the closest parking spots
 
-**Application description**: `<fill in>`
+**Data source**: [Open Street Maps](https://www.openstreetmap.org/)
 
-**Data source**: `<fill in>`
-
-**Technologies used**: `<fill in>`
+**Technologies used**: .Net Core 2.0 WebAPI, PostgreSQL, PostGIS, Dapper, Android, Kotlin, Retrofit, Google Maps
