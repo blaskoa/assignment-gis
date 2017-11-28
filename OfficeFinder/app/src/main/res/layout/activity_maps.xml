@@ -3,7 +3,8 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" xmlns:tools="http://schemas.android.com/tools">
+        android:layout_height="match_parent"
+        xmlns:tools="http://schemas.android.com/tools">
     <fragment
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
@@ -20,20 +21,49 @@
             android:layout_gravity="center_horizontal"
             android:background="@color/colorPrimaryDark"
             android:visibility="gone"
-            tools:visibility="visible">
+            android:backgroundTint="@color/panelBackground">
         <TextView
-                tools:text="Office name "
+                tools:text="Office name"
                 android:id="@+id/officeNameTextView"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:layout_gravity="center_horizontal"
-                android:gravity="center_horizontal"/>
+                android:gravity="center_horizontal"
+                android:textSize="12pt"
+                android:paddingTop="5dp"/>
         <Button
                 android:text="@string/select_parking_range"
                 android:id="@+id/selectParkingRangeButton"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center"
+                android:paddingBottom="5dp"/>
+    </LinearLayout>
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/parkingRangePanelLayout"
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/colorPrimaryDark"
+            android:visibility="gone"
+            android:backgroundTint="@color/panelBackground">
+        <SeekBar
+                tools:text="Office name"
+                android:id="@+id/parkingRangeSeekBar"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_horizontal"
+                android:progress="1"
+                android:paddingTop="5dp"/>
+        <Button
+                android:text="@string/find_parking"
+                android:id="@+id/findParkingButton"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="5dp"/>
     </LinearLayout>
     <LinearLayout
             android:layout_width="match_parent"
@@ -42,21 +72,75 @@
             android:orientation="vertical"
             android:layout_gravity="center_horizontal"
             android:background="@color/colorPrimaryDark"
-            android:visibility="gone">
-        <SeekBar
-                tools:text="Office name"
-                android:id="@+id/parkingRangeSeekBar"
-                android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:backgroundTint="@color/panelBackground"
+            tools:visibility="visible">
+        <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:gravity="center_horizontal"
-                android:progress="1"/>
-        <Button
-                android:text="@string/find_parking"
-                android:id="@+id/findParkingButton"
                 android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_gravity="center"/>
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_weight="30"
+                    android:text="@string/name"/>
+            <TextView
+                    android:id="@+id/parkingNameTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:gravity="end"
+                    android:layout_weight="70"
+                    tools:text="Jozove parkovisko"/>
+        </LinearLayout>
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_weight="30"
+                    android:text="@string/distance"/>
+            <TextView
+                    android:id="@+id/parkingDistanceTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:gravity="end"
+                    android:layout_weight="70"
+                    tools:text="150m"/>
+        </LinearLayout>
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_weight="30"
+                    android:text="@string/access"/>
+            <TextView
+                    android:id="@+id/parkingAccessTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:gravity="end"
+                    android:layout_weight="70"
+                    tools:text="Free"/>
+        </LinearLayout>
     </LinearLayout>
     <android.support.design.widget.FloatingActionButton
             android:layout_width="wrap_content"

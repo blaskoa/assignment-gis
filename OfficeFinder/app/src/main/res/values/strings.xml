@@ -2,8 +2,10 @@
     <string name="app_name">OfficeFinder</string>
     <string name="title_activity_maps">Map</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="find_parking">Find Parking</string>
     <string name="select_parking_range">Select parking range</string>
+    <string name="name">Name:</string>
+    <string name="distance">Distance:</string>
+    <string name="access">Access:</string>
+    <string name="unknown">Unknown</string>
 </resources>

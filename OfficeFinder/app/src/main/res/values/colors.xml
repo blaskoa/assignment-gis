@@ -10,5 +10,6 @@
     <color name="strokeInactive">#40000000</color>
     <color name="officeActive">#963F51B5</color>
     <color name="officeInactive">#403F51B5</color>
+    <color name="panelBackground">#F0d3d3d3</color>
 
 </resources>
