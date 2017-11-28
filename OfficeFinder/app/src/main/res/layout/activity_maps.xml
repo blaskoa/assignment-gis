@@ -147,7 +147,7 @@
             android:layout_height="wrap_content"
             android:clickable="true"
             app:fabSize="normal"
-            app:srcCompat="?attr/actionModeShareDrawable"
+            app:srcCompat="@drawable/ic_cached_black_24dp"
             android:id="@+id/floatingActionButton"
             app:layout_anchor="@+id/map"
             app:layout_anchorGravity="bottom|center"
