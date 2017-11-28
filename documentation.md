@@ -31,15 +31,19 @@ From the android perspective, the frontend consist of a single activity. Communi
 **Loading the offices**: When the user taps on the ping floating button on the screen, his location is sent to the backend and all offices within 5km of his location are rendered on the map. This button also removes all previous polygons from the map
 
 **Displaying office details**: When the user taps on an office, all other offices fade and the map pans and zooms to the selected office. The name of the office is displayed and the user is able to select a rang for parking.
+
 <img src="screenshots/office_details.png" width="512">
 
 **Selection of parking range**: The user is able to change the parking range with the slider. A circle is rendered, approximating the selected range.
+
 <img src="screenshots/range_selection.png" width="512">
 
 **Displaying parking spots**: When the user specifies the range, the circle fades and stays on the map until the user selects a different range. Any parking spots within the range are rendered on the map and color-coded from green to red representing the distance of the parking spot to the office. All previous parking spots are removed from the map, so they do not clutter the UI.
-<img src="parking_spots.png" width="512">
+
+<img src="screenshots/parking_spots.png" width="512">
 
 **Displaying parking spot details**: When the user taps on a parking spot, the map again and zooms on the parking spot. Name and Access are displayed if available. Also the distance to the office from the parking spot is displayed.
+
 <img src="screenshots/parking_spot_detail.png" width="512">
 
 # Backend
